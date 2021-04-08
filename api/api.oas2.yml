@@ -1,0 +1,677 @@
+swagger: '2.0'
+info:
+  description: 'Wapter API'
+  version: '1.0.0'
+  title: 'Wapter API'
+  contact:
+    email: contact@tobivo.com
+  license:
+    name: 'ISC'
+host: 'localhost:4010'
+basePath: '/v1'
+tags:
+  - name: 'Users'
+    description: 'Operations about User'
+  - name: 'Sites'
+    description: 'Operations about Sites'
+  - name: 'Alarms'
+    description: 'Operations about Alarms'
+  - name: 'Events'
+    description: 'Operations about Events'
+schemes:
+  - 'https'
+  - 'http'
+paths:
+  /login:
+    post:
+      tags:
+        - 'Users'
+      summary: 'Enables registered users to login'
+      description: 'On successful credentials check endpoint returns an access JWT token '
+      operationId: 'loginUser'
+      produces:
+        - 'application/json'
+      parameters:
+        - name: 'Email'
+          in: 'query'
+          type: 'string'
+          description: 'User Email'
+          required: true
+        - name: 'Password'
+          in: 'query'
+          type: 'string'
+          description: 'User Password'
+          required: true
+      responses:
+        default:
+          description: 'successful operation'
+        '200':
+          description: 'OK'
+          schema:
+            type: object
+            properties:
+              access_token:
+                type: 'string'
+                example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbiI6InRva2VuIn0.3lKXTqPGfngNmaKwb4f8fF88D6q2re9HQKpnZ0NXPr0'
+              role:
+                type: 'string'
+                example: 'superAdmin'
+              organizationId:
+                type: 'string'
+                example: '1234-test-orgId'
+        '400':
+          description: 'Failed'
+          schema:
+            type: 'object'
+  /register:
+    post:
+      tags:
+        - 'Users'
+      summary: 'Registers a new user'
+      description: 'Creates a new user entity'
+      operationId: 'registerUser'
+      produces:
+        - 'application/json'
+      parameters:
+        - in: body
+          name: body
+          description: User object that needs to be added to the DB
+          required: true
+          schema:
+            $ref: '#/definitions/User'
+      responses:
+        default:
+          description: 'successful operation'
+        '201':
+          description: 'successful operation'
+          schema:
+            type: 'object'
+        '400':
+          description: 'Failed'
+          schema:
+            type: 'object'
+  /password/changePassword:
+    post:
+      tags:
+        - 'Users'
+      summary: 'Lets users change their password'
+      description: "Changes user's password with a new input"
+      operationId: 'updatePassword'
+      produces:
+        - 'application/json'
+      parameters:
+        - in: body
+          name: body
+          description: User object that needs to be verified with the DB
+          required: true
+          schema:
+            $ref: '#/definitions/ChangePassword'
+      responses:
+        default:
+          description: 'successful operation'
+        '200':
+          description: 'password changed'
+          schema:
+            type: 'object'
+        '400':
+          description: 'Failed'
+          schema:
+            type: 'object'
+  /password/forgot:
+    post:
+      tags:
+        - 'Users'
+      summary: 'Sends create new password link to user email'
+      description: 'It will end up sending a reset link to the registered email which will allow it to change password'
+      operationId: 'forgotPassword'
+      produces:
+        - 'application/json'
+      parameters:
+        - name: 'Email'
+          in: 'query'
+          description: 'The user email for reset link'
+          required: true
+          type: 'string'
+      responses:
+        '200':
+          description: 'successful operation'
+          schema:
+            type: 'object'
+        '400':
+          description: 'Invalid username/password supplied'
+          schema:
+            type: 'object'
+  /password/reset:
+    post:
+      tags:
+        - 'Users'
+      summary: 'Reset password'
+      description: 'This route is called after user clicks the email link and lands on a reset front end page … this page will send the new password and the hash obtained from the email '
+      operationId: 'resetPassword'
+      produces:
+        - 'application/json'
+      parameters:
+        - name: 'hash'
+          in: 'query'
+          required: true
+          type: 'string'
+        - name: 'newPassword'
+          in: 'query'
+          required: true
+          type: 'string'
+      responses:
+        '200':
+          description: 'successful operation'
+          schema:
+            type: 'object'
+        '400':
+          description: 'Invalid username/password supplied'
+          schema:
+            type: 'object'
+  /sites:
+    get:
+      tags:
+        - 'Sites'
+      summary: Fetches all sites
+      description: 'Fetch site list'
+      operationId: 'getSites'
+      produces:
+        - application/xml
+        - application/json
+      responses:
+        '200':
+          description: successful operation
+          schema:
+            $ref: '#/definitions/SiteListing'
+        '400':
+          description: Invalid status value
+  /site/{id}:
+    get:
+      tags:
+        - 'Sites'
+      summary: Fetches metadata of current site
+      description: 'Fetch site data'
+      operationId: getSiteMeta
+      produces:
+        - application/xml
+        - application/json
+      parameters:
+        - name: id
+          in: path
+          type: string
+          required: true
+      responses:
+        '200':
+          description: successful operation
+          schema:
+            $ref: '#/definitions/SiteMeta'
+        '400':
+          description: Invalid status value
+  /site/{id}/tags:
+    get:
+      tags:
+        - 'Sites'
+      summary: Fetches tags associated with current site
+      description: 'Fetch site tag data'
+      operationId: getSiteTags
+      produces:
+        - application/xml
+        - application/json
+      parameters:
+        - name: id
+          in: path
+          type: string
+          required: true
+      responses:
+        '200':
+          description: successful operation
+          schema:
+            $ref: '#/definitions/SiteTags'
+        '400':
+          description: Invalid status value
+  /site/{id}/alarms:
+    get:
+      tags:
+        - 'Sites'
+      summary: Fetches alarms associated with current site
+      description: 'Fetch site alarm data'
+      operationId: getSiteAlarms
+      produces:
+        - application/xml
+        - application/json
+      parameters:
+        - name: id
+          in: path
+          type: string
+          required: true
+      responses:
+        '200':
+          description: successful operation
+          schema:
+            $ref: '#/definitions/SiteAlarms'
+        '400':
+          description: Invalid status value
+  /site/{id}/events:
+    get:
+      tags:
+        - 'Sites'
+      summary: Fetches events associated with current site
+      description: 'Fetch site event data'
+      operationId: getSiteEvents
+      produces:
+        - application/xml
+        - application/json
+      parameters:
+        - name: id
+          in: path
+          type: string
+          required: true
+      responses:
+        '200':
+          description: successful operation
+          schema:
+            $ref: '#/definitions/SiteEvents'
+        '400':
+          description: Invalid status value
+definitions:
+  User:
+    type: 'object'
+    properties:
+      name:
+        type: 'string'
+      email:
+        type: 'string'
+      password:
+        type: 'string'
+  ChangePassword:
+    type: 'object'
+    properties:
+      oldPassword:
+        type: 'string'
+      newPassword:
+        type: 'string'
+      confirmPassword:
+        type: 'string'
+      token:
+        type: 'string'
+  UserListing:
+    type: 'array'
+    properties:
+      id:
+        type: number
+      name:
+        type: 'string'
+      email:
+        type: 'string'
+    example:
+      [
+        {
+          id: 1,
+          name: 'Saxon Rabbet',
+          email: 'srabbet0@bluehost.com',
+        },
+        {
+          id: 2,
+          name: 'Andee Clilverd',
+          email: 'aclilverd1@dailymotion.com',
+        },
+        {
+          id: 3,
+          name: 'Rafaelita Showers',
+          email: 'rshowers2@mapy.cz',
+        },
+        {
+          id: 4,
+          name: 'Noby Yushankin',
+          email: 'nyushankin3@yale.edu',
+        },
+        {
+          id: 5,
+          name: 'Fayette Larrie',
+          email: 'flarrie4@wufoo.com',
+        },
+        {
+          id: 6,
+          name: 'Byron Lochhead',
+          email: 'blochhead5@google.co.jp',
+        },
+        {
+          id: 7,
+          name: 'Donnajean Hasloch',
+          email: 'dhasloch6@tinypic.com',
+        },
+        {
+          id: 8,
+          name: 'Christophe Cato',
+          email: 'ccato7@163.com',
+        },
+        {
+          id: 9,
+          name: 'Dixie Tailby',
+          email: 'dtailby8@google.fr',
+        },
+        {
+          id: 10,
+          name: 'Geri Lawlings',
+          email: 'glawlings9@booking.com',
+        },
+        {
+          id: 11,
+          name: 'Ram Sante',
+          email: 'rsantea@artisteer.com',
+        },
+        {
+          id: 12,
+          name: 'Rodina Gostling',
+          email: 'rgostlingb@theatlantic.com',
+        },
+        {
+          id: 13,
+          name: 'Ezra Musgrave',
+          email: 'emusgravec@acquirethisname.com',
+        },
+        {
+          id: 14,
+          name: 'Kial Gallagher',
+          email: 'kgallagherd@ow.ly',
+        },
+        {
+          id: 15,
+          name: 'Orv Strasse',
+          email: 'ostrassee@delicious.com',
+        },
+        {
+          id: 16,
+          name: 'Ruperto Jessett',
+          email: 'rjessettf@dagondesign.com',
+        },
+        {
+          id: 17,
+          name: 'Marmaduke Houselee',
+          email: 'mhouseleeg@over-blog.com',
+        },
+        {
+          id: 18,
+          name: 'Jake Lamzed',
+          email: 'jlamzedh@ovh.net',
+        },
+        {
+          id: 19,
+          name: 'Ranique Habeshaw',
+          email: 'rhabeshawi@furl.net',
+        },
+        {
+          id: 20,
+          name: 'Lola Warin',
+          email: 'lwarinj@yahoo.com',
+        },
+        {
+          id: 21,
+          name: 'Reinhard Snelgrove',
+          email: 'rsnelgrovek@europa.eu',
+        },
+        {
+          id: 22,
+          name: 'Hort Haddow',
+          email: 'hhaddowl@vistaprint.com',
+        },
+        {
+          id: 23,
+          name: 'Seka Fitzroy',
+          email: 'sfitzroym@gizmodo.com',
+        },
+        {
+          id: 24,
+          name: 'Quintilla Standall',
+          email: 'qstandalln@squarespace.com',
+        },
+        {
+          id: 25,
+          name: 'Renae Wyldbore',
+          email: 'rwyldboreo@list-manage.com',
+        },
+      ]
+  Site:
+    type: 'object'
+    properties:
+      id:
+        type: 'string'
+      address:
+        type: 'string'
+      status:
+        type: 'string'
+        enum:
+          - Online
+          - Offline
+          - Error
+  SiteMeta:
+    type: 'object'
+    properties:
+      id:
+        type: number
+      address:
+        type: 'string'
+      status:
+        type: 'string'
+    example:
+      {
+          id: 1,
+          address: "75 Acker Trail",
+          status: "Online"
+      }
+  SiteListing:
+    type: 'array'
+    properties:
+      id:
+        type: 'string'
+      address:
+        type: 'string'
+      status:
+        type: 'string'
+        enum:
+          - Online
+          - Offline
+          - Error
+    example:
+      [
+        {
+          id: 1,
+          address: "75 Acker Trail",
+          status: "Online"
+        }, 
+        {
+          id: 2,
+          address: "3 Sullivan Road",
+          status: "Online"
+        }, 
+        {
+          id: 3,
+          address: "9 Fulton Park",
+          status: "Online"
+        }, 
+        {
+          id: 4,
+          address: "63700 Merry Way",
+          status: "Offline"
+        }, 
+        {
+          id: 5,
+          address: "729 Brentwood Pass",
+          status: "Offline"
+        }, 
+        {
+          id: 6,
+          address: "0 Walton Drive",
+          status: "Offline"
+        }, 
+        {
+          id: 7,
+          address: "6 Monica Place",
+          status: "Online"
+        }, 
+        {
+          id: 8,
+          address: "264 Schurz Crossing",
+          status: "Offline"
+        }, 
+        {
+          id: 9,
+          address: "50489 Bluejay Park",
+          status: "Online"
+        }, 
+        {
+          id: 10,
+          address: "4 Bayside Street",
+          status: "Error"
+        }, 
+        {
+          id: 11,
+          address: "72242 Roth Hill",
+          status: "Online"
+        }, 
+        {
+          id: 12,
+          address: "5 Bluestem Avenue",
+          status: "Offline"
+        }, 
+        {
+          id: 13,
+          address: "801 Evergreen Junction",
+          status: "Error"
+        }, 
+        {
+          id: 14,
+          address: "87461 Mockingbird Road",
+          status: "Error"
+        }, 
+        {
+          id: 15,
+          address: "984 Village Point",
+          status: "Offline"
+        }, 
+        {
+          id: 16,
+          address: "37281 Riverside Road",
+          status: "Offline"
+        }, 
+        {
+          id: 17,
+          address: "065 Morrow Crossing",
+          status: "Error"
+        }, 
+        {
+          id: 18,
+          address: "049 Norway Maple Parkway",
+          status: "Offline"
+        }, 
+        {
+          id: 19,
+          address: "6 Cottonwood Drive",
+          status: "Online"
+        }, 
+        {
+          id: 20,
+          address: "28958 Melrose Crossing",
+          status: "Online"
+        }, 
+        {
+          id: 21,
+          address: "89140 Jenifer Court",
+          status: "Offline"
+        }, 
+        {
+          id: 22,
+          address: "6 Reindahl Junction",
+          status: "Error"
+        }, 
+        {
+          id: 23,
+          address: "5 Sunfield Lane",
+          status: "Offline"
+        }, 
+        {
+          id: 24,
+          address: "6668 Westerfield Plaza",
+          status: "Online"
+        }, 
+        {
+          id: 25,
+          address: "436 Moulton Alley",
+          status: "Error"
+        }
+      ]
+  SiteTags:
+    type: 'object'
+    properties:
+      name:
+        type: 'string'
+      value:
+        type: 'string'
+      updateTimeStamp:
+        type: 'string'
+      deviceHealth:
+        type: 'string'
+        enum:
+          - Good
+          - Bad
+      warning:
+        type: 'string'
+        enum:
+          - NONE
+          - WARN
+          - ALARM
+      type:
+        type: 'string'
+        enum:
+          - AI
+          - AO
+          - DI
+          - DO
+    example:
+      {
+          name: "Some name",
+          value: "203.3",
+          updateTimeStamp: "272349182737728",
+          deviceHealth: "Good",
+          warning: "NONE",
+          type: "DO"
+      }
+  SiteAlarms:
+    type: 'object'
+    properties:
+      deviceName:
+        type: 'string'
+      startTimestamp:
+        type: 'string'
+      endTimestamp:
+        type: 'string'
+      code:
+        type: number
+      message:
+        type: 'string'
+    example:
+      {
+          deviceName: "room/one/light",
+          startTimestamp: "1617869210",
+          endTimestamp: "2711239210",
+          code: 205,
+          message: "some alarm message",
+      }
+  SiteEvents:
+    type: 'object'
+    properties:
+      deviceName:
+        type: 'string'
+      startTimestamp:
+        type: 'string'
+      code:
+        type: number
+      message:
+        type: 'string'
+    example:
+      {
+          deviceName: "room/one/light",
+          startTimestamp: "1617869210",
+          code: 205,
+          message: "some event message",
+      }

@@ -1,0 +1,33 @@
+version: '3.7'
+
+services:
+  localstack:
+    image: localstack/localstack
+    ports:
+      - "${LOCALSTACK_PORT}:4566"
+    environment:
+      - DEFAULT_REGION=eu-west-1
+      - SERVICES=dynamodb
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - DATA_DIR=/tmp/localstack/data
+    volumes:
+      - /private:/tmp/localstack
+      - ./docker/localstack/scripts:/docker-entrypoint-initaws.d
+      - ./docker/localstack/db:/opt/code/localstack/db
+
+  dynamodb-admin:
+    build:
+      context: ./
+      dockerfile: ./docker/dynamodb-admin/Dockerfile
+    depends_on:
+      - localstack
+    links:
+      - "localstack:localstack"
+    ports:
+      - "${DYNAMODB_ADMIN_PORT}:${DYNAMODB_ADMIN_PORT}"
+    restart: always
+    environment:
+      PORT: ${DYNAMODB_ADMIN_PORT}
+      AWS_REGION: eu-west-1
+      DYNAMO_ENDPOINT: http://localstack:4566
+      AWS_ACCESS_KEY_ID: MOCK_ACCESS_KEY_ID

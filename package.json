@@ -1,0 +1,47 @@
+{
+  "name": "wecare-api",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "start": "prism mock -h 0.0.0.0 -p 4010 ./api/api.oas2.yml",
+    "lint": "spectral lint ./api/api.oas2.yml"
+  },
+  "author": "Tobivo",
+  "license": "ISC",
+  "devDependencies": {
+    "@commitlint/cli": "^9.1.1",
+    "@commitlint/config-conventional": "^9.1.1",
+    "@stoplight/prism-cli": "^3.3.6",
+    "@stoplight/spectral": "^5.4.0",
+    "commitizen": "^4.1.2",
+    "cz-conventional-changelog": "^3.2.0",
+    "husky": "^4.3.0"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "npm run lint",
+      "prepare-commit-msg": "exec < /dev/tty && npx git-cz --hook || true",
+      "commit-msg": "commitlint -E HUSKY_GIT_PARAMS"
+    }
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
+  },
+  "commitlint": {
+    "rules": {
+      "references-empty": [
+        2,
+        "never"
+      ]
+    },
+    "parserPreset": {
+      "parserOpts": {
+        "issuePrefixes": [
+          "wc-"
+        ]
+      }
+    }
+  }
+}
